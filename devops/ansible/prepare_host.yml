@@ -1,0 +1,45 @@
+# ansible-playbook ./prepare_host.yml -i inv-stage -s
+# ansible-playbook ./prepare_host.yml -i inv-prod -s
+---
+- hosts: all
+  tasks:
+    - name: install misc OS stuff
+      action: apt name={{ item }} state=installed
+      with_items:
+        - htop
+        - mc
+        - vim
+        - python
+        - python-pip
+
+    - name: install docker, nginx and other business things
+      action: apt pkg={{ item }} state=installed
+      with_items:
+        - docker.io
+        - nginx
+        - letsencrypt
+
+    - name: install docker-compose
+      action: pip name=docker-compose
+
+    - name: Create webroot directory
+      file: path=/var/www/webroot/.well-known/ state=directory
+
+    - name: copy nginx catchall files (to allow letsencrypt work)
+      copy:
+        src: ../conf/catchall_404.conf
+        dest: /etc/nginx/sites-enabled/
+
+    - name: rm nginx default file
+      file: path=/etc/nginx/sites-enabled/default state=absent
+
+    - name: restart nginx
+      service:
+        name: nginx
+        state: restarted
+
+    - name: generate dhparam.pem file for nginx HTTPS
+      shell:
+        _raw_params: "openssl dhparam -out /etc/nginx/dhparam.pem 2048"
+
+    # run letsencrypt per-installation, not here

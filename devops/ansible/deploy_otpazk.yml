@@ -1,0 +1,57 @@
+---
+- hosts: all
+  tasks:
+    - name: Create the target /opt directory
+      file: path=/opt/{{ domain_name }} state=directory
+
+    - name: Create the target var directory
+      file: path=/opt/{{ domain_name }}/var state=directory
+
+    - name: Create the target src directory
+      file: path=/opt/{{ domain_name }}/src state=directory
+
+    - name: copy source code
+      synchronize:
+        src: ../../src/
+        dest: /opt/{{ domain_name }}/src
+        rsync_opts:
+          - -L
+          - --delete
+          - --recursive
+          - --exclude='.venv'
+          - --exclude='.git'
+          - --exclude='static_root'
+          - --exclude='dhparams.pem'
+          - --exclude='local_settings.py'
+          - --exclude='.idea'
+
+    - name: copy altered docker-compose file
+      template:
+        src: ../docker/docker-compose.yml
+        dest: /opt/{{ domain_name }}/src/docker-compose.yml
+
+    - name: copy env files
+      copy:
+        src: ../envfiles/{{ domain_name }}.env
+        dest: /opt/{{ domain_name }}/src
+
+    - name: restart the docker
+      shell:
+        _raw_params: "cd /opt/{{ domain_name }}/src && docker-compose build && docker-compose stop && docker-compose rm --force && docker-compose up -d"
+
+#    - name: migrate the database
+#      shell:
+#        _raw_params: "cd /opt/{{ domain_name }}/src && docker-compose run --rm django ./manage.py migrate"
+
+#    - name: push local static_root
+#      synchronize:
+#        src: ../../var/static_root/
+#        dest: /opt/{{ domain_name }}/var/static_root
+#        rsync_opts:
+#         - -L
+#         - --delete
+#         - --recursive
+
+  #  - name: django collectstatic
+  #    shell:
+  #      _raw_params: "cd /opt/{{ domain_name }}/src && docker-compose run --rm django ./manage.py collectstatic --no-input"

@@ -1,0 +1,9 @@
+#copy to root folder project
+
+django:
+  restart: always
+  build: .
+  ports:
+    - 8000:8000
+  volumes:
+    - ./srс:/srv/app

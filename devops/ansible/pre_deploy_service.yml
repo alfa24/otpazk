@@ -1,0 +1,34 @@
+# ansible-playbook ./pre_deploy_service.yml -i inv-stage -s
+# ansible-playbook ./pre_deploy_service.yml -i inv-prod -s
+---
+- hosts: all
+  tasks:
+    - name: copy nginx config
+      template:
+        src: "../conf/{{ item }}"
+        dest: /etc/nginx/sites-enabled/{{ inst }}-{{ item }}
+      with_items:
+        - "ui-nginx.conf"
+
+    - name: restart nginx
+      service:
+        name: nginx
+        state: reloaded
+
+    # logs
+    - name: Create business logs directory
+      file: path=/var/log/{{ domain_name }}/ state=directory
+
+    # cron
+    #- name: copy cron config
+    #  template:
+    #    src: ../conf/cron.tradewire.conf
+    #    dest: /etc/cron.d/
+    #
+    #- name: restart cron
+    #  service:
+    #    name: cron
+    #    state: restarted
+    #
+    # # TODO: cron, logrotate, etc
+    # # anything which rarely changes, to avoid nginx reload every deploy
