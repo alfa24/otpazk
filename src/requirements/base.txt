@@ -1,5 +1,10 @@
 django
-psycopg2
 envparse
 gunicorn
 django-allauth
+paramiko
+django_forms_bootstrap
+django-widget-tweaks
+django-telegrambot
+apiai
+requests

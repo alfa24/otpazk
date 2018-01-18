@@ -15,7 +15,6 @@ import os
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
 
@@ -25,18 +24,25 @@ SECRET_KEY = 'yx7rt0e77qq(oo6@59w&3n(bl9ytofeay6qjaw4f@)4+upyn8j'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
-
+ALLOWED_HOSTS = ["*"]
 
 # Application definition
-
 INSTALLED_APPS = [
+    'staticfolder',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_forms_bootstrap',
+    'bot',
+    'django_telegrambot',
+    'widget_tweaks',
+    'main',
+    'orders',
+    'tasks',
+    'logs',
 ]
 
 MIDDLEWARE = [
@@ -50,11 +56,12 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'otpazk.urls'
+TELEGRAM_BOT_HANDLERS_CONF = "app.handlers"
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, "templates")],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -69,7 +76,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'otpazk.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 
@@ -79,7 +85,6 @@ DATABASES = {
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/2.0/ref/settings/#auth-password-validators
@@ -99,7 +104,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/2.0/topics/i18n/
 
@@ -113,10 +117,87 @@ USE_L10N = True
 
 USE_TZ = True
 
+STATIC_URL = '/otp/static/'
+MEDIA_URL = '/otp/media/'
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/2.0/howto/static-files/
+# папки static при разработке
+# так же берутся из папки static в папке приложения
+STATICFILES_DIRS = (
+    os.path.join(BASE_DIR, "staticfolder", "static_dev"),
+)
 
-STATIC_URL = '/static/'
+# папка static которая используется в продакшене, собирается из всех папок командой collectstatic
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfolder", "static_prod")
+MEDIA_ROOT = os.path.join(BASE_DIR, "staticfolder", "media")
 
-TEMPLATE_DIRS = (os.path.join(BASE_DIR,  'templates'),)
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+EMAIL_HOST = '10.248.170.221'
+
+EMAIL_PORT = 25
+
+EMAIL_HOST_USER = ""
+
+EMAIL_HOST_PASSWORD = ""
+
+EMAIL_USE_TSL = True
+
+DJANGO_TELEGRAMBOT = {
+
+    'MODE': 'POLLING',  # (Optional [str]) # The default value is WEBHOOK,
+    # otherwise you may use 'POLLING'
+    # NB: if use polling you must provide to run
+    # a management command that starts a worker
+
+    'WEBHOOK_SITE': 'http://10.248.179.141',
+    'WEBHOOK_PREFIX': '/prefix',  # (Optional[str]) # If this value is specified,
+    # a prefix is added to webhook url
+
+    # 'WEBHOOK_CERTIFICATE' : 'cert.pem', # If your site use self-signed
+    # certificate, must be set with location of your public key
+    # certificate.(More info at https://core.telegram.org/bots/self-signed )
+
+    'BOTS': [
+        {
+            'TOKEN': '488975124:AAGMg7Rtz0L5ooS7pP-3XLoRhHCZIhr0_zc',  # Your bot token.
+
+            # 'ALLOWED_UPDATES':(Optional[list[str]]), # List the types of
+            # updates you want your bot to receive. For example, specify
+            # ``["message", "edited_channel_post", "callback_query"]`` to
+            # only receive updates of these types. See ``telegram.Update``
+            # for a complete list of available update types.
+            # Specify an empty list to receive all updates regardless of type
+            # (default). If not specified, the previous setting will be used.
+            # Please note that this parameter doesn't affect updates created
+            # before the call to the setWebhook, so unwanted updates may be
+            # received for a short period of time.
+
+            # 'TIMEOUT':(Optional[int|float]), # If this value is specified,
+            # use it as the read timeout from the server
+
+            # 'WEBHOOK_MAX_CONNECTIONS':(Optional[int]), # Maximum allowed number of
+            # simultaneous HTTPS connections to the webhook for update
+            # delivery, 1-100. Defaults to 40. Use lower values to limit the
+            # load on your bot's server, and higher values to increase your
+            # bot's throughput.
+
+            # 'POLL_INTERVAL' : (Optional[float]), # Time to wait between polling updates from Telegram in
+            # seconds. Default is 0.0
+
+            # 'POLL_CLEAN':(Optional[bool]), # Whether to clean any pending updates on Telegram servers before
+            # actually starting to poll. Default is False.
+
+            # 'POLL_BOOTSTRAP_RETRIES':(Optional[int]), # Whether the bootstrapping phase of the `Updater`
+            # will retry on failures on the Telegram server.
+            # |   < 0 - retry indefinitely
+            # |     0 - no retries (default)
+            # |   > 0 - retry up to X times
+
+            # 'POLL_READ_LATENCY':(Optional[float|int]), # Grace time in seconds for receiving the reply from
+            # server. Will be added to the `timeout` value and used as the read timeout from
+            # server (Default: 2).
+        },
+        # Other bots here with same structure.
+    ],
+
+}
