@@ -102,5 +102,7 @@ ENV/
 *~
 dhparams.pem
 local.env
-/src/.idea/
+src/.idea/*
+src/.idea/
+.idea
 \#*\#
