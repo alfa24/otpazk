@@ -1,0 +1,125 @@
+{% load static %}
+{% load bootstrap_tags %}
+{% load widget_tweaks %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+
+    <script type="text/javascript" src="{% static 'bootstrap/js/jquery-1.11.1.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'bootstrap/js/moment-with-locales.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'bootstrap/js/bootstrap-datetimepicker.min.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}"/>
+    <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap-datetimepicker.min.css' %}"/>
+    {#скрипт выбора даты#}
+    <script type="text/javascript">
+        $(function () {
+            //Инициализация
+            $("#dateStart").datetimepicker({
+                language: 'ru',
+                minuteStepping: 10,
+                defaultDate: "{{ defaultStartDate }}",
+                {#            daysOfWeekDisabled: [0, 6],#}
+                maxDate: "{{ defaultStartDate }}"
+            });
+            $("#dateEnd").datetimepicker({
+                language: 'ru',
+                minuteStepping: 10,
+                defaultDate: "{{ defaultEndDate }}",
+                minDate: "{{ defaultEndDate }}"
+            });
+            //При изменении даты в dateStart, она устанавливается как минимальная для dateEnd
+            $("#dateStart").on("dp.change", function (e) {
+                $("#dateEnd").data("DateTimePicker").setMinDate(e.date);
+            });
+            //При изменении даты в dateEnd, она устанавливается как максимальная для dateStart
+            $("#dateEnd").on("dp.change", function (e) {
+                $("#dateStart").data("DateTimePicker").setMaxDate(e.date);
+            });
+        });
+    </script>
+</head>
+<body>
+
+<div class="container">
+    <div class="row">
+        <form class="form-inline" action="index.html" method="get">
+            <legend>Добавить разрешение на проведение инвентаризации:</legend>
+            {% csrf_token %}
+            <div class="col-xs-12">
+                <div class="form-group">
+                    {{ form.azs|append_attr:"class: form-control" }}
+                    <label>Дата с</label>
+                    <div class="input-group date" id="dateStart">
+                        {{ form.dateStart|append_attr:"class: form-control" }}
+                        <span class="input-group-addon">
+                            <span class="glyphicon glyphicon-calendar"></span>
+                        </span>
+                    </div>
+                    <label>по</label>
+                    <div class="input-group date" id="dateEnd">
+                        {{ form.dateEnd|append_attr:"class: form-control" }}
+                        <span class="input-group-addon">
+                            <span class="glyphicon glyphicon-calendar"></span>
+                        </span>
+                    </div>
+                    <label>Вкл.</label>
+                    {{ form.enabled | append_attr:"checked" }}
+                    {#                    <input type="hidden" name="enabled" checked id="id_enabled"/>#}
+                    <button type="submit" class="btn btn-primary">Добавить</button>
+                </div>
+            </div>
+        </form>
+    </div>
+    <br>
+    <br>
+    <div class="row">
+        <h3 class="label-info">{{ msg }}</h3>
+    </div>
+    <div class="row">
+        <legend>Список последних разрешений:</legend>
+        <div class="row">
+            <div class="col-xs-2 h4">АЗК</div>
+            <div class="col-xs-2 h4">Дата С</div>
+            <div class="col-xs-2 h4">Дата По</div>
+            <div class="col-xs-2 h4">Включено</div>
+            <div class="col-xs-2 h4">Отключение</div>
+        </div>
+        {% for item in invs %}
+
+            <div class="row">
+                <div class="col-xs-2 ">
+                    {{ item.azs }}
+                </div>
+                <div class="col-xs-2 ">
+                    {{ item.dateStart|date:"d E Y H:i" }}
+                </div>
+                <div class="col-xs-2">
+                    {{ item.dateEnd|date:"d E Y H:i" }}
+                </div>
+                <div class="col-xs-2">
+                    {% if item.enabled %}
+                        вкл.
+                    {% else %}
+                        <b>выкл</b>
+                    {% endif %}
+                </div>
+                <div class="col-xs-2">
+                    {% if item.enabled %}
+                        <a href="index.html?id_invent={{ item.id }}&enbled=False">Отключить</a>
+                    {% else %}
+                        <a href="index.html?id_invent={{ item.id }}&enbled=True">Включить</a>
+                    {% endif %}
+
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+
+</div>
+</body>
+</html>

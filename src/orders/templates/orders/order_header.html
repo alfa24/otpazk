@@ -1,0 +1,11 @@
+
+<div class="row">
+    {% if count_send_msg != 0 %}
+    {% if count_send_msg < 0 %}
+    <label class="label-danger">Ошибка отправки заявок</label>
+    {% endif %}
+    {% if count_send_msg > 0 %}
+    <label class="label-info">Отправлено {{ count_send_msg }} заявок</label>
+    {% endif %}
+    {% endif %}
+</div>

@@ -1,0 +1,24 @@
+ <div class="navbar-default sidebar nicescroll" role="navigation">
+            <div class="sidebar-nav navbar-collapse ">
+                <ul class="nav" id="side-menu">
+                    <li class="sidebar-search hidden-sm hidden-md hidden-lg">
+                        <div class="input-group custom-search-form">
+                            <input type="text" class="form-control" placeholder="Search...">
+                            <span class="input-group-btn">
+                                <button class="btn btn-default" type="button"><i class="ti-search"></i> </button>
+                            </span>
+                        </div>
+                    </li>
+                    <li>
+                        <a href="{% url 'index' %}" class="waves-effect"><i class="glyphicon glyphicon-home fa-fw"></i>Главная</a>
+                    </li>
+                    <li>
+                        <a href="{% url 'orders:orderAllAzk' %}" class="waves-effect"><i class="glyphicon glyphicon-arrow-right fa-fw"></i>Заявки в ЦДС</a>
+                    </li>
+                    <li>
+                        <a href="{% url 'main:naliv' %}" class="waves-effect"><i class="glyphicon glyphicon-tint fa-fw"></i>Техналив</a>
+                    </li>
+                </ul>
+            </div>
+            <!-- /.sidebar-collapse -->
+        </div>

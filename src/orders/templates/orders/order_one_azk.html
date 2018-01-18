@@ -1,0 +1,38 @@
+{% extends "orders/order_base.html" %}
+{% load static %}
+{% load bootstrap_tags %}
+{% load widget_tweaks %}
+{% block sidebar %}{% endblock %}
+{% block container %}
+
+
+<div class="row bg-title">
+    <div class="col-lg-12">
+        <h4 class="page-title">{{ azk }}</h4>
+        <!--<ol class="breadcrumb">-->
+        <!--<li><a href="#">Dashboard</a></li>-->
+        <!--</ol>-->
+    </div>
+    <!-- /.col-lg-12 -->
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="white-box">
+            {% include "orders/order_header.html" %}
+            <div class="form-group">
+                <form action="" method="post">
+                    {% csrf_token %}
+                    <label>{{ form.fio.label }}</label>
+                    {{ form.fio|append_attr:"class: form-control" }}
+                    <label>{{ form.text.label }}</label>
+                    {{ form.text|append_attr:"class: form-control" }}
+                    <hr>
+                    <div class="text-right">
+                        <input type="submit" value="Отправить" class="btn btn-primary btn-lg"/>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
