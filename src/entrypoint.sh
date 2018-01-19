@@ -2,7 +2,7 @@
 set -e
 cmd="$@"
 
-echo " * * * * * root /app/task.sh" | crontab
+echo " * * * * * root /app/tasks.sh" | crontab
 /etc/init.d/cron restart
 crontab -l
 
