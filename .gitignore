@@ -9,7 +9,6 @@ __pycache__
 # virtualenv
 .venv
 
-src/.idea/*
 src/.idea/
 .idea
 
