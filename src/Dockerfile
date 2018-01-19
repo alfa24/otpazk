@@ -6,18 +6,17 @@ RUN echo "Asia/Irkutsk" > /etc/timezone && \
       dpkg-reconfigure -f noninteractive tzdata
 
 RUN apt-get update &&  \
-    apt-get install -y --no-install-recommends cron
+    apt-get install -y --no-install-recommends cron supervisor
 
 # the django project
-COPY ./otpazk /app/otpazk
-COPY ./requirements /app/requirements
-COPY ./manage.py /app/
-
-# the local apps
-COPY ./templates /app/templates
+COPY . /app/
+COPY ./supervisor.conf /etc/supervisor/conf.d/supervisor.conf
 
 WORKDIR /app
 RUN pip install  --default-timeout=100 -r /app/requirements/production.txt
 
-#ENTRYPOINT ["/entrypoint.sh"]
-CMD [ "./manage.py", "runserver", "0.0.0.0:8000" ]
+RUN chmod +x /app/entrypoint.sh
+RUN chmod +x /app/tasks.sh
+
+ENTRYPOINT ["/app/entrypoint.sh"]
+CMD ["ping 127.0.0.1"]

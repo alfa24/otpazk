@@ -25,19 +25,26 @@
           - --exclude='local_settings.py'
           - --exclude='.idea'
 
-    - name: copy altered docker-compose file
-      template:
-        src: ../docker/docker-compose.yml
-        dest: /opt/{{ domain_name }}/src/docker-compose.yml
-
     - name: copy env files
       copy:
-        src: ../envfiles/{{ domain_name }}.env
-        dest: /opt/{{ domain_name }}/src
+        src: ../envfiles/prodaction.env
+        dest: /opt/{{ domain_name }}/devops/envfiles/
 
-    - name: restart the docker
+    - name: build the docker
       shell:
-        _raw_params: "cd /opt/{{ domain_name }}/src && docker-compose build && docker-compose stop && docker-compose rm --force && docker-compose up -d"
+        _raw_params: "cd /opt/{{ domain_name }}/src && docker-compose build"
+
+    - name: stop the docker
+      shell:
+        _raw_params: "cd /opt/{{ domain_name }}/src && docker-compose stop"
+
+    - name: force the docker
+      shell:
+        _raw_params: "cd /opt/{{ domain_name }}/src && docker-compose rm --force"
+
+    - name: start the docker
+      shell:
+        _raw_params: "cd /opt/{{ domain_name }}/src && docker-compose up -d"
 
 #    - name: migrate the database
 #      shell:

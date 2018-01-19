@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
 import os
+from envparse import env
+env.read_envfile('.env')
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -28,7 +30,6 @@ ALLOWED_HOSTS = [env('DJANGO_ALLOWED_HOSTS', default='localhost')]
 
 # Application definition
 INSTALLED_APPS = [
-    'staticfolder',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -117,18 +118,18 @@ USE_L10N = True
 
 USE_TZ = True
 
-STATIC_URL = '/otp/static/'
-MEDIA_URL = '/otp/media/'
+STATIC_URL = '/static/'
+MEDIA_URL = '/media/'
 
-# папки static при разработке
-# так же берутся из папки static в папке приложения
+# # папки static при разработке
+# # так же берутся из папки static в папке приложения
 STATICFILES_DIRS = (
-    os.path.join(BASE_DIR, "staticfolder", "static_dev"),
+    os.path.join(BASE_DIR, "static"),
 )
-
-# папка static которая используется в продакшене, собирается из всех папок командой collectstatic
-STATIC_ROOT = os.path.join(BASE_DIR, "staticfolder", "static_prod")
-MEDIA_ROOT = os.path.join(BASE_DIR, "staticfolder", "media")
+#
+# # папка static которая используется в продакшене, собирается из всех папок командой collectstatic
+STATIC_ROOT = os.path.join(BASE_DIR, "static_root")
+MEDIA_ROOT = os.path.join(BASE_DIR, "media", "media")
 
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 

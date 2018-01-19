@@ -1,0 +1,11 @@
+#copy to root folder project
+
+django:
+  restart: always
+  build: .
+  ports:
+    - 8000:8000
+  volumes:
+#    - ./srс:/app/src
+    - ../devops/envfiles/.env:/app/.env
+    - ./db.sqlite3:/app/db.sqlite3:rw

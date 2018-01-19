@@ -3,8 +3,8 @@ set -e
 cmd="$@"
 
 # configure the crontab to check email
-#CRONTAB_STR=(echo " */1 * * * * django /app/poll_helpdesk_email_queues.sh >> /tmp/foo.log 2>&1")
-#crontab -l | grep -q $CRONTAB_STR  && echo 'entry exists' || (crontab -l 2>/dev/null; echo $CRONTB_STR) | crontab -
+CRONTAB_STR=(echo " 30 0 * * * django /app/task.sh >> /tmp/foo.log 2>&1")
+crontab -l | grep -q $CRONTAB_STR  && echo 'entry exists' || (crontab -l 2>/dev/null; echo $CRONTB_STR) | crontab -
 
 # the official postgres image uses 'postgres' as default user if not set explictly.
 #if [ -z "$POSTGRES_USER" ]; then
