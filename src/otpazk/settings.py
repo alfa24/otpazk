@@ -24,7 +24,7 @@ SECRET_KEY = 'yx7rt0e77qq(oo6@59w&3n(bl9ytofeay6qjaw4f@)4+upyn8j'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = [env('DJANGO_ALLOWED_HOSTS', default='localhost')]
 
 # Application definition
 INSTALLED_APPS = [
@@ -56,7 +56,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'otpazk.urls'
-TELEGRAM_BOT_HANDLERS_CONF = "app.handlers"
+TELEGRAM_BOT_HANDLERS_CONF = "bot.telegrambot"
 
 TEMPLATES = [
     {
@@ -132,24 +132,24 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "staticfolder", "media")
 
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-EMAIL_HOST = '10.248.170.221'
+EMAIL_HOST = env('DJANGO_EMAIL_HOST')
 
-EMAIL_PORT = 25
+EMAIL_PORT = env('DJANGO_EMAIL_PORT')
 
-EMAIL_HOST_USER = ""
+EMAIL_HOST_USER = env('DJANGO_EMAIL_HOST_USER')
 
-EMAIL_HOST_PASSWORD = ""
+EMAIL_HOST_PASSWORD = env('DJANGO_EMAIL_HOST_PASSWORD')
 
-EMAIL_USE_TSL = True
+EMAIL_USE_TSL = env('DJANGO_EMAIL_USE_TSL')
 
 DJANGO_TELEGRAMBOT = {
 
-    'MODE': 'POLLING',  # (Optional [str]) # The default value is WEBHOOK,
+    'MODE':  env('DJANGO_TELEGRAMBOT_MODE'),  # (Optional [str]) # The default value is WEBHOOK,
     # otherwise you may use 'POLLING'
     # NB: if use polling you must provide to run
     # a management command that starts a worker
 
-    'WEBHOOK_SITE': 'http://10.248.179.141',
+    'WEBHOOK_SITE':  env('DJANGO_TELEGRAMBOT_WEBHOOK_SITE'),
     'WEBHOOK_PREFIX': '/prefix',  # (Optional[str]) # If this value is specified,
     # a prefix is added to webhook url
 
@@ -159,7 +159,7 @@ DJANGO_TELEGRAMBOT = {
 
     'BOTS': [
         {
-            'TOKEN': '488975124:AAGMg7Rtz0L5ooS7pP-3XLoRhHCZIhr0_zc',  # Your bot token.
+            'TOKEN': env('DJANGO_TELEGRAMBOT_TOKEN'),  # Your bot token.
 
             # 'ALLOWED_UPDATES':(Optional[list[str]]), # List the types of
             # updates you want your bot to receive. For example, specify
