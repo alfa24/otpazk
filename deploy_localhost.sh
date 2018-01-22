@@ -16,9 +16,12 @@ fi
 
 
 pip install -r src/requirements/base.txt
+python src/manage.py migrate
+python src/manage.py collectstatic --no-input
 cp src/supervisor.conf /etc/supervisor/conf.d/supervisor.conf
 update-rc.d supervisor enable
 service supervisor start
+service supervisor restart
 supervisorctl reread
 supervisorctl update
 supervisorctl status
