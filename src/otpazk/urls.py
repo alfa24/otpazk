@@ -34,7 +34,7 @@ urlpatterns = [
                   url(r'otp/', include('main.urls')),
                   url(r'otp/', include('orders.urls')),
                   # url(r'^', include('django_telegrambot.urls')),
-                  url(r'', views.index, name='index'),
+                  url(r'^$', views.index, name='index'),
               ]\
               + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) #\
               # + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
