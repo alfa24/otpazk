@@ -1,7 +1,7 @@
 from bot.models import SlackNotice
 from django.core.management.base import BaseCommand
 import paramiko
-import datetime
+import datetime, pytz
 
 from main.models import CharacteristicSP, TypeServicePoint, TypeCharacteristicSP
 
@@ -11,7 +11,8 @@ def synctime(ip):
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(ip, username="ufo", password="ufo17azk")
-        cur_date = datetime.datetime.today()
+        #cur_date = datetime.datetime.today()
+        cur_date = datetime.datetime.now(tz=pytz.timezone("Asia/Hong_Kong"))
         channel = ssh.get_transport().open_session()
         channel.get_pty()
         channel.settimeout(5)
@@ -68,4 +69,5 @@ class Command(BaseCommand):
                         try:
                             synctime(ip)
                         except:
+                            pass
                             self.send_to_slack(c.service_point, ip)
