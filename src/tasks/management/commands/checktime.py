@@ -84,7 +84,7 @@ class Command(BaseCommand):
                     ip = c.value1
                     try:
                         cur_date, then, delta_minutes = checktime(ip, c.service_point)
-                        if delta_minutes >= 5 or delta_minutes <= -5:
+                        if int(delta_minutes) >= 5 or int(delta_minutes) <= -5:
                             self.stdout.write(
                                 self.style.ERROR("Расходится время на " + str(delta_minutes) + " минут: "))
                             self.stdout.write(self.style.ERROR("Service point: " + str(c.service_point)))
