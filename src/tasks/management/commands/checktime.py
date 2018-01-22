@@ -84,12 +84,12 @@ class Command(BaseCommand):
                     ip = c.value1
                     try:
                         cur_date, then, delta_minutes = checktime(ip, c.service_point)
-                        if delta_minutes > 5 or delta_minutes < -5:
+                        if delta_minutes >= 5 or delta_minutes <= -5:
                             self.stdout.write(
-                                self.style.SUCCESS("Расходится время на " + str(delta_minutes) + " минут: "))
-                            self.stdout.write(self.style.SUCCESS("Service point: " + str(c.service_point)))
+                                self.style.ERROR("Расходится время на " + str(delta_minutes) + " минут: "))
+                            self.stdout.write(self.style.ERROR("Service point: " + str(c.service_point)))
                             self.stdout.write(
-                                self.style.SUCCESS(
+                                self.style.ERROR(
                                     "Время на кассе: " + str(then) + "    Точное время: " + str(cur_date)))
                             self.stdout.write(self.style.SUCCESS(" "))
                             self.send_to_slack(c.service_point, ip, then, cur_date, delta_minutes)
