@@ -21,7 +21,7 @@ def main(ip):
 
         channel = ssh.get_transport().open_session()
         channel.get_pty()
-        channel.settimeout(5)
+        # channel.settimeout(5)
 
         channel.exec_command('cd /opt/otpazk/ && ./deploy_localhost.sh')
 
