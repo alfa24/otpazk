@@ -8,11 +8,22 @@ if [ ! -f "${act}" ]; then
     virtualenv -p python3.6 .venv
     source ${act}
     pip install pip raven --upgrade
-    pip install -r src/requirements/base.txt -r src/requirements/local.txt -r src/requirements/test.txt
+    pip install -r src/requirements/base.txt
     set +e
 else
     source ${act}
 fi
+
+
+pip install -r src/requirements/base.txt
+cp src/supervisor.conf /etc/supervisor/conf.d/supervisor.conf
+update-rc.d supervisor enable
+service supervisor start
+supervisorctl reread
+supervisorctl update
+supervisorctl status
+
+
 
 ARGS="$@"
 if [ -n "${ARGS}" ]; then
