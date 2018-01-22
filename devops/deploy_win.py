@@ -3,7 +3,7 @@ import paramiko
 
 def main(ip):
     try:
-        username = input('Enter username: ')
+        username = 'root'
         password = input('Enter password: ')
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())

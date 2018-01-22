@@ -14,10 +14,9 @@ else
     source ${act}
 fi
 
-
 pip install -r src/requirements/base.txt
-python src/manage.py migrate
 python src/manage.py collectstatic --no-input
+python src/manage.py migrate
 cp src/supervisor.conf /etc/supervisor/conf.d/supervisor.conf
 update-rc.d supervisor enable
 service supervisor start
@@ -25,8 +24,6 @@ service supervisor restart
 supervisorctl reread
 supervisorctl update
 supervisorctl status
-
-
 
 ARGS="$@"
 if [ -n "${ARGS}" ]; then
