@@ -2,6 +2,7 @@
 export PYTHONDONTWRITEBYTECODE='dontwrite'
 ROOT=`dirname "${BASH_SOURCE[0]}"`
 act="${ROOT}/.venv/bin/activate"
+managepy="${ROOT}/src/manage.py"
 
 if [ ! -f "${act}" ]; then
     set -e
@@ -20,8 +21,8 @@ supervisorctl reread
 supervisorctl update
 
 pip install -r src/requirements/base.txt
-python src/manage.py collectstatic --no-input
-python src/manage.py migrate
+python managepy collectstatic --no-input
+python managepy migrate
 cp src/supervisor.conf /etc/supervisor/conf.d/supervisor.conf
 
 service supervisor start
