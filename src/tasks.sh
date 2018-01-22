@@ -1,4 +1,4 @@
 #!/bin/bash
 
-cd /app
-/usr/local/bin/python manage.py runtasks
+cd /opt/otpazk/src
+/opt/otpazk/.venv/bin/python manage.py runtasks
