@@ -1,40 +1,45 @@
 from bot.models import SlackNotice
 from django.core.management.base import BaseCommand
 import paramiko
-import datetime, pytz
+import datetime
+from django.conf import settings
 
 from main.models import CharacteristicSP, TypeServicePoint, TypeCharacteristicSP
 
 
 def checktime(ip, service_point):
+    text = ip
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
     try:
-        text = ip
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(ip, username="ufo", password="ufo17azk")
+        ssh.connect(ip, username=settings.__getattr__('POS_USERNAME'),
+                    password=settings.__getattr__('POS_PASSWORD'))
+    except paramiko.ssh_exception.AuthenticationException as e:
+        ssh.connect(ip, username=settings.__getattr__('POS_USERNAME'),
+                    password=settings.__getattr__('POS_OLD_PASSWORD'))
 
-        # cur_date = datetime.datetime.today()
-        cur_date = datetime.datetime.now(tz=pytz.timezone("Asia/Hong_Kong"))
-        channel = ssh.get_transport().open_session()
-        channel.get_pty()
-        channel.settimeout(5)
-        channel.exec_command('date')
-        msg = channel.recv(1024).decode('utf-8')
+    cur_date = datetime.datetime.today()
 
-        text += ": " + str(cur_date.hour) + ':' + str(cur_date.minute) + ':' + str(cur_date.second) + ' - '
-        print(service_point, text, msg[11:19])
+    channel = ssh.get_transport().open_session()
+    channel.get_pty()
+    channel.settimeout(5)
+    channel.exec_command('date')
+    msg = channel.recv(1024).decode('utf-8')
 
-        then = datetime.datetime(cur_date.year, cur_date.month, cur_date.day, int(msg[11:13]), int(msg[14:16]), 00)
-        delta = then - cur_date
-        seconds = delta.total_seconds()
-        delta_minutes = seconds // 60
+    text += ": " + str(cur_date.hour) + ':' + str(cur_date.minute) + ':' + str(cur_date.second) + ' - '
+    print(service_point, text, msg[10:19])
 
-        msg = channel.recv(1024)
-        channel.close()
-        return cur_date, then, delta_minutes
-    except Exception as e:
-        print('Ошибка: ' + ip)
-        raise e
+    then = datetime.datetime(cur_date.year, cur_date.month, cur_date.day, int(msg[10:12]), int(msg[13:15]) - 3, 00)
+    ntptime = datetime.datetime(cur_date.year, cur_date.month, cur_date.day, cur_date.hour, cur_date.minute,
+                                cur_date.second)
+    delta = then - ntptime
+    seconds = delta.total_seconds()
+    delta_minutes = seconds // 60
+
+    msg = channel.recv(1024)
+    channel.close()
+    return cur_date, then, delta_minutes
 
 
 class Command(BaseCommand):
@@ -82,7 +87,9 @@ class Command(BaseCommand):
             if c.type.type == TypeCharacteristicSP.IP:
                 if c.service_point.type.type == TypeServicePoint.POS or c.service_point.type.type == TypeServicePoint.OIL:
                     ip = c.value1
+                    error_text = ''
                     try:
+                        self.stdout.write(self.style.SUCCESS("Подключение к " + str(c.service_point)))
                         cur_date, then, delta_minutes = checktime(ip, c.service_point)
                         if int(delta_minutes) >= 5 or int(delta_minutes) <= -5:
                             self.stdout.write(
@@ -91,8 +98,16 @@ class Command(BaseCommand):
                             self.stdout.write(
                                 self.style.ERROR(
                                     "Время на кассе: " + str(then) + "    Точное время: " + str(cur_date)))
-                            self.stdout.write(self.style.SUCCESS(" "))
                             self.send_to_slack(c.service_point, ip, then, cur_date, delta_minutes)
-                    except:
-                        pass
-                        # self.send_to_slack(c.service_point, ip)
+                        else:
+                            self.stdout.write(self.style.SUCCESS("Расхождение на" + str(delta_minutes)))
+                        self.stdout.write(self.style.SUCCESS(" "))
+                    except paramiko.ssh_exception.AuthenticationException:
+                        error_text = 'Не подходит логин или пароль.'
+                    except TimeoutError:
+                        error_text = 'Таймаут подключения к хосту.'
+                    except Exception as e:
+                        error_text = 'Ошибка: ' + e.__str__()
+                    if error_text:
+                        self.stdout.write(self.style.ERROR(error_text))
+                        # # self.send_to_slack(c.service_point, ip)

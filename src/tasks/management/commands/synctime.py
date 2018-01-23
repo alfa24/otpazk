@@ -2,6 +2,7 @@ from bot.models import SlackNotice
 from django.core.management.base import BaseCommand
 import paramiko
 import datetime, pytz
+from django.conf import settings
 
 from main.models import CharacteristicSP, TypeServicePoint, TypeCharacteristicSP
 
@@ -10,9 +11,16 @@ def synctime(ip):
     try:
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(ip, username="ufo", password="ufo17azk")
-        #cur_date = datetime.datetime.today()
-        cur_date = datetime.datetime.now(tz=pytz.timezone("Asia/Hong_Kong"))
+        try:
+            ssh.connect(ip, username=settings.__getattr__('POS_USERNAME'),
+                        password=settings.__getattr__('POS_PASSWORD'))
+        except paramiko.ssh_exception.AuthenticationException as e:
+            ssh.connect(ip, username=settings.__getattr__('POS_USERNAME'),
+                        password=settings.__getattr__('POS_OLD_PASSWORD'))
+
+
+        cur_date = datetime.datetime.today()
+        # cur_date = datetime.datetime.now(tz=pytz.timezone("Asia/Hong_Kong"))
         channel = ssh.get_transport().open_session()
         channel.get_pty()
         channel.settimeout(5)
@@ -59,15 +67,16 @@ class Command(BaseCommand):
             notice.send('Ошибка установки времени!',attachments)
 
     def handle(self, *args, **options):
-        if len(options['service_point_id']) != 0:
-            chr = CharacteristicSP.objects.filter(service_point_id=options['service_point_id'][0])
-            for c in chr:
-                if c.type.type == TypeCharacteristicSP.IP:
-                    if c.service_point.type.type == TypeServicePoint.POS or c.service_point.type.type == TypeServicePoint.OIL:
-                        ip = c.value1
-                        self.stdout.write(self.style.SUCCESS("Service point: " + str(c.service_point)))
-                        try:
-                            synctime(ip)
-                        except:
-                            pass
-                            self.send_to_slack(c.service_point, ip)
+        pass
+        # if len(options['service_point_id']) != 0:
+        #     chr = CharacteristicSP.objects.filter(service_point_id=options['service_point_id'][0])
+        #     for c in chr:
+        #         if c.type.type == TypeCharacteristicSP.IP:
+        #             if c.service_point.type.type == TypeServicePoint.POS or c.service_point.type.type == TypeServicePoint.OIL:
+        #                 ip = c.value1
+        #                 self.stdout.write(self.style.SUCCESS("Service point: " + str(c.service_point)))
+        #                 try:
+        #                     synctime(ip)
+        #                 except:
+        #                     pass
+        #                     self.send_to_slack(c.service_point, ip)
