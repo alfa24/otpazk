@@ -30,12 +30,12 @@ def checktime(ip, service_point):
     text += ": " + str(cur_date.hour) + ':' + str(cur_date.minute) + ':' + str(cur_date.second) + ' - '
     print(service_point, text, msg[10:19])
 
-    then = datetime.datetime(cur_date.year, cur_date.month, cur_date.day, int(msg[10:12]), int(msg[13:15]) - 3, 00)
+    then = datetime.datetime(cur_date.year, cur_date.month, cur_date.day, int(msg[11:13]), int(msg[14:16]), 00)
     ntptime = datetime.datetime(cur_date.year, cur_date.month, cur_date.day, cur_date.hour, cur_date.minute,
                                 cur_date.second)
     delta = then - ntptime
     seconds = delta.total_seconds()
-    delta_minutes = seconds // 60
+    delta_minutes = (seconds // 60) + 1
 
     msg = channel.recv(1024)
     channel.close()
@@ -100,7 +100,7 @@ class Command(BaseCommand):
                                     "Время на кассе: " + str(then) + "    Точное время: " + str(cur_date)))
                             self.send_to_slack(c.service_point, ip, then, cur_date, delta_minutes)
                         else:
-                            self.stdout.write(self.style.SUCCESS("Расхождение на" + str(delta_minutes)))
+                            self.stdout.write(self.style.SUCCESS("Расхождение на " + str(delta_minutes) + " минут"))
                         self.stdout.write(self.style.SUCCESS(" "))
                     except paramiko.ssh_exception.AuthenticationException:
                         error_text = 'Не подходит логин или пароль.'
