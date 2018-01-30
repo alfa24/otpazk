@@ -158,6 +158,8 @@ class CharacteristicSP(models.Model):
 # Физические лица
 class Person(models.Model):
     name = models.CharField(verbose_name="ФИО", max_length=100, blank=True, null=True, default=None)
+    phone = models.CharField(verbose_name="Телефон", max_length=100, blank=True, null=True, default=None)
+    telegram_id = models.IntegerField(verbose_name="ID telegram", max_length=10, blank=True, null=True, default=None)
     description = models.TextField(verbose_name='Комментарий', blank=True, null=True, default=None)
     is_active = models.BooleanField(verbose_name="Активный", default=True)
     created = models.DateTimeField(verbose_name="Создан", auto_now_add=True, auto_now=False)
