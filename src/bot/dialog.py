@@ -2,10 +2,17 @@
 from main.models import Person, EmployeesAZK, Azs
 
 
-def hello(start_message):
-    answer = yield "Здравствуйте! Давайте познакомимся? \nЯ Агент техподдержки Сибинтек.\nА Вы? \nНапишите свое полное ФИО?"
+def get_person(user_id):
+    try:
+        return Person.objects.get(telegram_id=user_id), ''
+    except:
+        person, answer = yield from hello(user_id)
+        return person, answer
+
+
+def hello(user_id):
+    answer = yield "Здравствуйте! Мы еще не знакомы! \nЯ Агент техподдержки Сибинтек.\nА Вы? \nНапишите свое полное ФИО."
     name = str(answer.text)
-    chat_id = int(answer.from_user['id'])
     answer = yield "Приятно познакомиться, %s.\nЕсли вы работаете на АЗК/АЗС, то напишите полный номер АЗК?\nНапример: 055\n\nЕсли в другом месте, то название вашей компании." % name
     workname = answer.text.lower()
     answer = yield "Напишите ваш номер телефона.\nНапример: 89025566777"
@@ -14,16 +21,16 @@ def hello(start_message):
     saved = yield from ask_yes_or_no("Сохраняем информацию о Вас?")
     if saved:
 
-        if Person.objects.filter(telegram_id=chat_id).count()>0:
-            person = Person.objects.filter(telegram_id=chat_id)[0]
-        elif Person.objects.filter(name=name).count()>0:
-            person = Person.objects.filter(name=name)[0]
+        if Person.objects.filter(telegram_id=user_id).count() > 0:
+            person = Person.objects.filter(telegram_id=user_id).first()
+        elif Person.objects.filter(name=name).count() > 0:
+            person = Person.objects.filter(name=name).first()
         else:
             person = Person()
 
         person.name = name
         person.phone = phone
-        person.telegram_id = chat_id
+        person.telegram_id = user_id
         person.description = workname
         person.save()
 
@@ -39,8 +46,39 @@ def hello(start_message):
             empl.save()
 
         answer = "Информация сохранена."
+        return person, answer
     else:
-        answer = "Как скажите."
+        answer = "Очень жаль."
+        return False, answer
+
+
+def dialog_start(user_id):
+    person, answer = yield from get_person(user_id)
+    if person:
+        if not answer:
+            answer += "\nЗдравствуйте %s!" % person
+        answer += "\nЧтобы узнать что я умею введите /help"
+
+    return answer
+
+
+def dialog_ticket(user_id):
+    person, answer = yield from get_person(user_id)
+
+    if person:
+        text =''
+        if not answer:
+            text = '\nЗдравствуйте %s.' % person
+        ticket_text = yield '%s \nОпишите вашу проблему.' % text
+
+        answer = yield from ask_yes_or_no("Отправляем заявку в службу техподдержки?")
+        if answer:
+            # send ticket
+            answer = 'Заявка отправлена.'
+        else:
+            answer = 'Заявка отменена.'
+    else:
+        answer += '\nЗаявка отменена. Заявки могут подавать только авторизованные пользователи.'
 
     e = GeneratorExit(answer)
     raise e

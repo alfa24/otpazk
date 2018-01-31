@@ -9,15 +9,13 @@ import apiai as apiai
 import requests
 
 from bot.models import SlackNotice
-from telegram.ext import CommandHandler, MessageHandler, Filters
+from telegram.ext import CommandHandler
 from telegram import ReplyKeyboardMarkup
 from telegram import ReplyMarkup
 from telegram.ext import Filters
-from telegram.ext import InlineQueryHandler
 from telegram.ext import MessageHandler
-from telegram.ext import Updater
 from django_telegrambot.apps import DjangoTelegramBot
-from bot.dialog import *
+from bot.dialog import dialog_ticket, dialog_start
 from bot.items import *
 import logging
 
@@ -40,31 +38,29 @@ def get_handler(chat_id):
 def handle_message(bot, update, **kwargs):
     print("Received", update.message)
     chat_id = update.message.chat_id
-    generator = hello('')
-    if update.message.text == "/start":
-        handlers.pop(chat_id, None)
-
-    if update.message.text == "/ticket":
-        handlers.pop(chat_id, None)
-        generator = hello('')
-    apply_handler(bot, chat_id, generator, update.message)
+    user_id = int(update.message.from_user['id'])
+    apply_handler(bot, chat_id, None, update.message)
 
 
-def apply_handler(bot, chat_id, generator,  message=None):
+def apply_handler(bot, chat_id, generator, message=None):
     just_started, handler = get_handler(chat_id)
-    if just_started:
-        handler = handlers[chat_id] = generator
-        answer = next(handler)
-    else:
-        try:
-            print(message.text)
+    try:
+
+        if just_started:
+            if not generator:
+                return
+
+            handler = handlers[chat_id] = generator
+            answer = next(handler)
+        else:
             answer = handler.send(message)
-        except StopIteration as e:
-            del handlers[chat_id]
-            return False
-        except GeneratorExit as e:
-            del handlers[chat_id]
-            answer = str(e)
+
+    except StopIteration as e:
+        del handlers[chat_id]
+        answer = str(e)
+    except GeneratorExit as e:
+        del handlers[chat_id]
+        answer = str(e)
     send_answer(bot, chat_id, answer)
 
 
@@ -139,10 +135,6 @@ def _convert_answer_part(answer_part):
     return answer_part
 
 
-def start(bot, update):
-    bot.sendMessage(update.message.chat_id, text='Hi!')
-
-
 def smalltalk(bot, update):
     chat_id = update.message.chat_id
     just_started, handler = get_handler(chat_id)
@@ -166,49 +158,57 @@ def smalltalk(bot, update):
 
 def help(bot, update):
     text = 'Поддерживаемые команды:' + '\n' + '\n' + \
+           '/start - Авторизоваться в системе (ФИО, телефон и т.д.)' + '\n' + \
            '/help - Список доступных команд бота' + '\n' + \
-           '/ticket [текст заявки]- Отправить заявку в службу техподдержки "Сибинтек"' + '\n' + \
-           'Например: /ticket не работает принтер на АЗК 100' + '\n' + \
+           '/ticket - Отправить заявку в службу техподдержки "Сибинтек"' + '\n' + \
            '/weather - Прогноз погоды в Иркутске' + '\n' + \
            '/citate - Случайная цитата с сайта forismatic.com'
 
     bot.sendMessage(update.message.chat_id, text=text)
 
 
-def order(bot, update):
+def start(bot, update):
+    print("Received", update.message)
     chat_id = update.message.chat_id
-    message = update.message.text
-    just_started, handler = get_handler(chat_id)
-    if just_started:
-        answer = next(handler)
-    else:
-        try:
-            answer = handler.send(message)
-        except StopIteration:
-            answer = 'Кончились вопросы'
-            pass
-            # del handlers[chat_id]
-    bot.sendMessage(update.message.chat_id, text=answer)
-    # noticies = SlackNotice.objects.filter(type=SlackNotice.TBOT_ORDER)
-    # try:
-    #     text = update.message.text[update.message.text.index(' '):].strip()
-    #     reply_text = 'Заявка отправлена!'
-    #     attachments = [
-    #         {
-    #             'fields': [
-    #                 {
-    #                     "title": text,
-    #                     "short": False,
-    #                 },
-    #             ],
-    #         },
-    #     ]
-    #     for notice in noticies:
-    #         notice.send('Новая заявка:', attachments)
-    # except:
-    #     reply_text = 'Не правильно введена команда!\nПример команды: \n /ticket на АЗК 100 не работает принтер'
-    #
-    # bot.sendMessage(update.message.chat_id, text=reply_text)
+    user_id = int(update.message.from_user['id'])
+
+    handlers.pop(chat_id, None)
+    generator = dialog_start(user_id)
+
+    apply_handler(bot, chat_id, generator, update.message)
+
+
+def order(bot, update):
+    print("Received", update.message)
+    chat_id = update.message.chat_id
+    user_id = int(update.message.from_user['id'])
+
+    handlers.pop(chat_id, None)
+    generator = dialog_ticket(user_id)
+
+    apply_handler(bot, chat_id, generator, update.message)
+
+
+# noticies = SlackNotice.objects.filter(type=SlackNotice.TBOT_ORDER)
+# try:
+#     text = update.message.text[update.message.text.index(' '):].strip()
+#     reply_text = 'Заявка отправлена!'
+#     attachments = [
+#         {
+#             'fields': [
+#                 {
+#                     "title": text,
+#                     "short": False,
+#                 },
+#             ],
+#         },
+#     ]
+#     for notice in noticies:
+#         notice.send('Новая заявка:', attachments)
+# except:
+#     reply_text = 'Не правильно введена команда!\nПример команды: \n /ticket на АЗК 100 не работает принтер'
+#
+# bot.sendMessage(update.message.chat_id, text=reply_text)
 
 
 def text(bot, update):
@@ -247,6 +247,9 @@ def photo(bot, update):
 
 
 def weather(bot, update):
+    chat_id = update.message.chat_id
+    handlers.pop(chat_id, None)
+
     s_city = "Irkutsk,RU"
     city_id = 2023469
     appid = "2cf741b207964a4fd3fe7c672f6e260a"
@@ -269,6 +272,9 @@ def weather(bot, update):
 
 
 def citate(bot, update):
+    chat_id = update.message.chat_id
+    handlers.pop(chat_id, None)
+
     res = requests.get("http://api.forismatic.com/api/1.0/",
                        params={'method': 'getQuote', 'key': '457653', 'lang': 'ru', 'format': 'json'})
     data = res.json()
@@ -296,18 +302,20 @@ def main():
     # dp = DjangoTelegramBot.getDispatcher('BOT_n_username')  #get by bot username
 
     # on different commands - answer in Telegram
-    dp.add_handler(MessageHandler(Filters.command, handle_message))
+    dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(CommandHandler("help", help))
+    dp.add_handler(CommandHandler("ticket", order))
+    dp.add_handler(CommandHandler("weather", weather))
+    dp.add_handler(CommandHandler("citate", citate))
+
+    # dp.add_handler(MessageHandler(Filters.command, handle_message))
     dp.add_handler(MessageHandler(Filters.private, smalltalk))
     dp.add_handler(MessageHandler(Filters.text, handle_message))
     dp.add_handler(MessageHandler(Filters.photo, photo))
     # message_handler =
     # inline_query_handler = InlineQueryHandler(self.handle_inline_query)
 
-    # dp.add_handler(CommandHandler("start", start))
-    # dp.add_handler(CommandHandler("help", help))
-    # dp.add_handler(CommandHandler("ticket", order))
-    # dp.add_handler(CommandHandler("weather", weather))
-    # dp.add_handler(CommandHandler("citate", citate))
+
 
     # on noncommand i.e message - echo the message on Telegram
     # dp.add_handler(MessageHandler(Filters.text, text))
