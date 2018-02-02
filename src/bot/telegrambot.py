@@ -15,7 +15,7 @@ from telegram import ReplyMarkup
 from telegram.ext import Filters
 from telegram.ext import MessageHandler
 from django_telegrambot.apps import DjangoTelegramBot
-from bot.dialog import dialog_ticket, dialog_start
+from bot.dialog import dialog_ticket, dialog_start, dialog_me, dialog_register, dialog_accept
 from bot.items import *
 import logging
 
@@ -38,7 +38,6 @@ def get_handler(chat_id):
 def handle_message(bot, update, **kwargs):
     print("Received", update.message)
     chat_id = update.message.chat_id
-    user_id = int(update.message.from_user['id'])
     apply_handler(bot, chat_id, None, update.message)
 
 
@@ -108,14 +107,14 @@ def _convert_answer_part(answer_part):
         return Message(answer_part)
     if isinstance(answer_part, (collections.abc.Iterable, Keyboard)):
         # клавиатура?
-        resize_keyboard = False
+        resize_keyboard = True
         one_time_keyboard = True
 
         if isinstance(answer_part, collections.abc.Iterable):
             answer_part = list(answer_part)
         else:
-            one_time_keyboard = answer_part.one_time_keyboard
-            resize_keyboard = answer_part.resize_keyboard
+            # one_time_keyboard = answer_part.one_time_keyboard
+            # resize_keyboard = answer_part.resize_keyboard
             answer_part = answer_part.markup
 
         if isinstance(answer_part[0], str):
@@ -159,6 +158,9 @@ def smalltalk(bot, update):
 def help(bot, update):
     text = 'Поддерживаемые команды:' + '\n' + '\n' + \
            '/start - Авторизоваться в системе (ФИО, телефон и т.д.)' + '\n' + \
+           '/register - Изменить данные в системе (ФИО, телефон и т.д.)' + '\n' + \
+           '/accept - Авторизовать сотрудника' + '\n' + \
+           '/me - Информация об вашем профиле' + '\n' + \
            '/help - Список доступных команд бота' + '\n' + \
            '/ticket - Отправить заявку в службу техподдержки "Сибинтек"' + '\n' + \
            '/weather - Прогноз погоды в Иркутске' + '\n' + \
@@ -168,7 +170,6 @@ def help(bot, update):
 
 
 def start(bot, update):
-    print("Received", update.message)
     chat_id = update.message.chat_id
     user_id = int(update.message.from_user['id'])
 
@@ -178,8 +179,37 @@ def start(bot, update):
     apply_handler(bot, chat_id, generator, update.message)
 
 
+def me(bot, update):
+    chat_id = update.message.chat_id
+    user_id = int(update.message.from_user['id'])
+
+    handlers.pop(chat_id, None)
+    generator = dialog_me(user_id)
+
+    apply_handler(bot, chat_id, generator, update.message)
+
+
+def register(bot, update):
+    chat_id = update.message.chat_id
+    user_id = int(update.message.from_user['id'])
+
+    handlers.pop(chat_id, None)
+    generator = dialog_register(user_id)
+
+    apply_handler(bot, chat_id, generator, update.message)
+
+
+def accept(bot, update):
+    chat_id = update.message.chat_id
+    user_id = int(update.message.from_user['id'])
+
+    handlers.pop(chat_id, None)
+    generator = dialog_accept(user_id)
+
+    apply_handler(bot, chat_id, generator, update.message)
+
+
 def order(bot, update):
-    print("Received", update.message)
     chat_id = update.message.chat_id
     user_id = int(update.message.from_user['id'])
 
@@ -303,6 +333,9 @@ def main():
 
     # on different commands - answer in Telegram
     dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(CommandHandler("register", register))
+    dp.add_handler(CommandHandler("accept", accept))
+    dp.add_handler(CommandHandler("me", me))
     dp.add_handler(CommandHandler("help", help))
     dp.add_handler(CommandHandler("ticket", order))
     dp.add_handler(CommandHandler("weather", weather))
