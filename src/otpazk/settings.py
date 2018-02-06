@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 
 import os
 from envparse import env
+
 env.read_envfile('.env')
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -25,6 +26,7 @@ SECRET_KEY = 'yx7rt0e77qq(oo6@59w&3n(bl9ytofeay6qjaw4f@)4+upyn8j'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+SITE_ID = 1
 
 ALLOWED_HOSTS = [env('DJANGO_ALLOWED_HOSTS', default='localhost')]
 
@@ -44,6 +46,19 @@ INSTALLED_APPS = [
     'orders',
     'tasks',
     'logs',
+
+    #     wiki
+    'django.contrib.sites',
+    'django.contrib.humanize',
+    'django_nyt',
+    'mptt',
+    'sekizai',
+    'sorl.thumbnail',
+    'wiki.apps.WikiConfig',
+    'wiki.plugins.attachments.apps.AttachmentsConfig',
+    'wiki.plugins.notifications.apps.NotificationsConfig',
+    'wiki.plugins.images.apps.ImagesConfig',
+    'wiki.plugins.macros.apps.MacrosConfig',
 ]
 
 MIDDLEWARE = [
@@ -70,6 +85,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                "sekizai.context_processors.sekizai",
             ],
         },
     },
@@ -108,7 +124,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/2.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'ru-ru'
 
 TIME_ZONE = 'Asia/Hong_Kong'
 
@@ -132,36 +148,34 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static_root")
 MEDIA_ROOT = os.path.join(BASE_DIR, "media", "media")
 
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
 EMAIL_HOST = env('DJANGO_EMAIL_HOST')
-
 EMAIL_PORT = env('DJANGO_EMAIL_PORT')
-
 EMAIL_HOST_USER = env('DJANGO_EMAIL_HOST_USER')
-
 EMAIL_HOST_PASSWORD = env('DJANGO_EMAIL_HOST_PASSWORD')
-
 EMAIL_USE_TSL = env('DJANGO_EMAIL_USE_TSL')
 
 POS_USERNAME = env('DJANGO_POS_USERNAME')
 POS_PASSWORD = env('DJANGO_POS_PASSWORD')
 POS_OLD_PASSWORD = env('DJANGO_POS_OLD_PASSWORD')
 
-DJANGO_TELEGRAMBOT = {
+# wiki
+WIKI_ACCOUNT_HANDLING = True
+WIKI_ACCOUNT_SIGNUP_ALLOWED = True
 
-    'MODE':  env('DJANGO_TELEGRAMBOT_MODE'),  # (Optional [str]) # The default value is WEBHOOK,
+from django.core.urlresolvers import reverse_lazy
+LOGIN_REDIRECT_URL = reverse_lazy('wiki:get', kwargs={'path': ''})
+
+DJANGO_TELEGRAMBOT = {
+    'MODE': env('DJANGO_TELEGRAMBOT_MODE'),  # (Optional [str]) # The default value is WEBHOOK,
     # otherwise you may use 'POLLING'
     # NB: if use polling you must provide to run
     # a management command that starts a worker
-
-    'WEBHOOK_SITE':  env('DJANGO_TELEGRAMBOT_WEBHOOK_SITE'),
+    'WEBHOOK_SITE': env('DJANGO_TELEGRAMBOT_WEBHOOK_SITE'),
     'WEBHOOK_PREFIX': '/prefix',  # (Optional[str]) # If this value is specified,
     # a prefix is added to webhook url
-
     # 'WEBHOOK_CERTIFICATE' : 'cert.pem', # If your site use self-signed
     # certificate, must be set with location of your public key
     # certificate.(More info at https://core.telegram.org/bots/self-signed )
-
     'BOTS': [
         {
             'TOKEN': env('DJANGO_TELEGRAMBOT_TOKEN'),  # Your bot token.

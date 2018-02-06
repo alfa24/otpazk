@@ -1,4 +1,4 @@
-django
+django=1.11.10
 envparse
 gunicorn
 django-allauth
@@ -8,3 +8,4 @@ django-widget-tweaks
 django-telegrambot
 apiai
 requests
+wiki

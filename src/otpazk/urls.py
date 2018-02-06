@@ -25,6 +25,10 @@ from django.contrib import admin
 from django.conf.urls.static import static
 from django.conf import settings
 
+# wiki
+from wiki.urls import get_pattern as get_wiki_pattern
+from django_nyt.urls import get_pattern as get_nyt_pattern
+
 import main
 from . import views
 
@@ -34,7 +38,12 @@ urlpatterns = [
                   url(r'otp/', include('main.urls')),
                   url(r'otp/', include('orders.urls')),
                   # url(r'^', include('django_telegrambot.urls')),
+
+                  #   wiki
+                  url(r'wiki/notifications/', get_nyt_pattern()),
+                  url(r'wiki/', get_wiki_pattern()),
+
                   url(r'^$', views.index, name='index'),
               ]\
-              + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) #\
-              # + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+              + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) \
+              + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
