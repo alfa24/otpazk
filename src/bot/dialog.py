@@ -28,7 +28,7 @@ def get_person_info(person):
 
     if person:
         # инфа о физлице
-        answer = "\n===Информация о Вас=== \n" \
+        answer = "\n===Информация о пользователе=== \n" \
                  "Ваш telegram ID: %s \n" \
                  "ФИО: %s \n" \
                  "Телефон: %s \n" \
