@@ -156,13 +156,36 @@ def dialog_me(user_id):
     return answer
 
 
-def send_ticket(ticket_text):
+def send_ticket(person, ticket_text):
+    answer = ''
+    if person:
+        # инфа о физлице
+        answer = "ФИО: %s \n" \
+                 "Телефон: %s \n" \
+                 "Место работы: %s \n\n" % \
+                 (person.name,
+                  person.phone,
+                  person.description)
+
+        # инфа как о сотруднике
+        empls = EmployeesAZK.objects.filter(person=person)
+        for empl in empls:
+            answer += "Объект: %s\n" \
+                      "Должность: %s\n\n" % \
+                      (empl.azk,
+                       empl.position)
+
     noticies = SlackNotice.objects.filter(type=SlackNotice.TBOT_ORDER)
     attachments = [
         {
             'fields': [
                 {
                     "title": ticket_text,
+                    "short": False,
+                },
+                {
+                    "title": 'Отправитель',
+                    "value": answer,
                     "short": False,
                 },
             ],
@@ -183,7 +206,7 @@ def dialog_ticket(user_id):
         ticket_text = answer.text
         answer = yield from ask_yes_or_no("Отправляем заявку в службу техподдержки?")
         if answer:
-            send_ticket(ticket_text)
+            send_ticket(person, ticket_text)
             answer = 'Заявка отправлена.'
         else:
             answer = 'Заявка отменена.'
