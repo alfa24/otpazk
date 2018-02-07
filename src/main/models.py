@@ -39,9 +39,11 @@ class Azs(models.Model):
     sublan = models.CharField(verbose_name="Подсеть", max_length=19, blank=True, null=True, default=None)
     phone = models.CharField(verbose_name="Телефон", max_length=165, blank=True, null=True, default=None)
     eMail = models.EmailField(verbose_name="E-Mail", blank=True, null=True, default=None)
-    manager = models.ForeignKey(Personal, verbose_name="Менеджер", on_delete=models.DO_NOTHING, blank=True, null=True, default=None)
+    manager = models.ForeignKey(Personal, verbose_name="Менеджер", on_delete=models.DO_NOTHING, blank=True, null=True,
+                                default=None)
     address = models.TextField(verbose_name="Адрес", blank=True, null=True, default=None)
-    azs_group = models.ForeignKey(AzsGroup, verbose_name="Группа", on_delete=models.DO_NOTHING, blank=True, null=True, default=None)
+    azs_group = models.ForeignKey(AzsGroup, verbose_name="Группа", on_delete=models.DO_NOTHING, blank=True, null=True,
+                                  default=None)
     is_deleted = models.BooleanField(verbose_name="Пометка удаления", default=False)
     created = models.DateTimeField(verbose_name="Создан", auto_now_add=True, auto_now=False)
     updated = models.DateTimeField(verbose_name="Изменен", auto_now_add=False, auto_now=True)
@@ -101,7 +103,7 @@ class ServicePoint(models.Model):
     updated = models.DateTimeField(verbose_name="Изменен", auto_now_add=False, auto_now=True)
 
     def __str__(self):
-        return "%s - %s" % (self.azs.full_name, self.type )
+        return "%s - %s" % (self.azs.full_name, self.type)
 
     class Meta:
         verbose_name = 'АРМ'
@@ -136,7 +138,7 @@ class TypeCharacteristicSP(models.Model):
 
 # Характеристики АРМ
 class CharacteristicSP(models.Model):
-    service_point = models.ForeignKey(ServicePoint,  on_delete=models.DO_NOTHING)
+    service_point = models.ForeignKey(ServicePoint, on_delete=models.DO_NOTHING)
     type = models.ForeignKey(TypeCharacteristicSP, on_delete=models.DO_NOTHING)
     value1 = models.CharField(verbose_name="Значение 1", max_length=100, blank=True, null=True, default=None)
     value2 = models.CharField(verbose_name="Значение 2", max_length=100, blank=True, null=True, default=None)
@@ -161,12 +163,18 @@ class Person(models.Model):
     phone = models.CharField(verbose_name="Телефон", max_length=100, blank=True, null=True, default=None)
     telegram_id = models.IntegerField(verbose_name="ID telegram", blank=True, null=True, default=None, unique=True)
     description = models.TextField(verbose_name='Комментарий', blank=True, null=True, default=None)
+    hr = models.BooleanField(verbose_name="Модератор", default=False)
     is_active = models.BooleanField(verbose_name="Активный", default=True)
     created = models.DateTimeField(verbose_name="Создан", auto_now_add=True, auto_now=False)
     updated = models.DateTimeField(verbose_name="Изменен", auto_now_add=False, auto_now=True)
 
     def __str__(self):
         return "%s" % (self.name)
+
+    def _is_hr(self):
+        return self.hr
+
+    is_hr = _is_hr
 
     class Meta:
         verbose_name = 'Физическое лицо'
@@ -218,7 +226,8 @@ class EmployeesAZK(models.Model):
     )
     azk = models.ForeignKey(Azs, verbose_name="АЗК", on_delete=models.DO_NOTHING)
     person = models.ForeignKey(Person, verbose_name="Физ. лицо", on_delete=models.DO_NOTHING)
-    position = models.ForeignKey(Position, verbose_name="Должность", on_delete=models.DO_NOTHING, blank=True, null=True, default=None)
+    position = models.ForeignKey(Position, verbose_name="Должность", on_delete=models.DO_NOTHING, blank=True, null=True,
+                                 default=None)
     permission = models.ManyToManyField(Permission, verbose_name="Роли")
     status = models.IntegerField(verbose_name='Статус', choices=Status, default=IN_PROCESSING, blank=False, null=False)
     login = models.CharField(verbose_name="Логин", max_length=100, blank=True, null=True, default=None)
