@@ -180,7 +180,8 @@ def send_ticket(person, ticket_text):
         {
             'fields': [
                 {
-                    "title": ticket_text,
+                    "title": "Текст заявки",
+                    "value": ticket_text,
                     "short": False,
                 },
                 {
