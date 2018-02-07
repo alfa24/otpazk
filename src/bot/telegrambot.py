@@ -28,43 +28,52 @@ last_message_ids = {}
 
 # Получить состояние разговора по номеру чата
 # Если разговора еще не было, то создаем новый
-def get_handler(chat_id):
-    if chat_id not in handlers:
-        result = None
-        return True, result
-    return False, handlers[chat_id]
+def get_handler(chat_id, user_id):
+    try:
+        handler = handlers[chat_id][user_id]
+        return False, handler
+    except:
+        return True, None
+
+
+def del_handler(chat_id, user_id):
+    try:
+        handlers[chat_id].pop(user_id, None)
+    except:
+        pass
 
 
 def handle_message(bot, update, **kwargs):
-    print("Received", update.message)
+    # print("Received", update.message)
     chat_id = update.message.chat_id
-    apply_handler(bot, chat_id, None, update.message)
+    user_id = int(update.message.from_user['id'])
+    apply_handler(bot, chat_id, user_id, None, update.message)
 
 
-def apply_handler(bot, chat_id, generator, message=None):
-    just_started, handler = get_handler(chat_id)
+def apply_handler(bot, chat_id, user_id, generator, message=None):
+    just_started, handler = get_handler(chat_id, user_id)
     try:
 
         if just_started:
             if not generator:
                 return
-
-            handler = handlers[chat_id] = generator
+            handlers[chat_id] = {}
+            handler = handlers[chat_id][user_id] = generator
             answer = next(handler)
         else:
             answer = handler.send(message)
 
     except StopIteration as e:
-        del handlers[chat_id]
+        del_handler(chat_id, user_id)
         answer = str(e)
     except GeneratorExit as e:
-        del handlers[chat_id]
+        del_handler(chat_id, user_id)
         answer = str(e)
     send_answer(bot, chat_id, answer)
 
 
 def send_answer(bot, chat_id, answer):
-    print("Sending answer %r to %s" % (answer, chat_id))
+    # print("Sending answer %r to %s" % (answer, chat_id))
     if isinstance(answer, collections.abc.Iterable) and not isinstance(answer, str):
         # мы получили несколько объектов -- сперва каждый надо обработать
         answer = list(map(_convert_answer_part, answer))
@@ -98,7 +107,7 @@ def _send_or_edit(bot, chat_id, message):
         bot.editMessageText(text=message.text, chat_id=chat_id, message_id=last_message_ids[chat_id],
                             **message.options)
     else:
-        print("Sending message: %r" % message.text)
+        # print("Sending message: %r" % message.text)
         last_message_ids[chat_id] = bot.sendMessage(chat_id=chat_id, text=message.text, **message.options)
 
 
@@ -136,7 +145,8 @@ def _convert_answer_part(answer_part):
 
 def smalltalk(bot, update):
     chat_id = update.message.chat_id
-    just_started, handler = get_handler(chat_id)
+    user_id = int(update.message.from_user['id'])
+    just_started, handler = get_handler(chat_id, user_id)
     if just_started:
         request = apiai.ApiAI('4e48db01a8eb487797d0eed3f1bdd370').text_request()  # small talk
         # request = apiai.ApiAI('7377522fa62f481bb8af3058ed0ba6e6').text_request()  # tech support
@@ -173,72 +183,50 @@ def start(bot, update):
     chat_id = update.message.chat_id
     user_id = int(update.message.from_user['id'])
 
-    handlers.pop(chat_id, None)
+    del_handler(chat_id, user_id)
     generator = dialog_start(user_id)
 
-    apply_handler(bot, chat_id, generator, update.message)
+    apply_handler(bot, chat_id, user_id, generator, update.message)
 
 
 def me(bot, update):
     chat_id = update.message.chat_id
     user_id = int(update.message.from_user['id'])
 
-    handlers.pop(chat_id, None)
+    del_handler(chat_id, user_id)
     generator = dialog_me(user_id)
 
-    apply_handler(bot, chat_id, generator, update.message)
+    apply_handler(bot, chat_id, user_id, generator, update.message)
 
 
 def register(bot, update):
     chat_id = update.message.chat_id
     user_id = int(update.message.from_user['id'])
 
-    handlers.pop(chat_id, None)
+    del_handler(chat_id, user_id)
     generator = dialog_register(user_id)
 
-    apply_handler(bot, chat_id, generator, update.message)
+    apply_handler(bot, chat_id, user_id, generator, update.message)
 
 
 def accept(bot, update):
     chat_id = update.message.chat_id
     user_id = int(update.message.from_user['id'])
 
-    handlers.pop(chat_id, None)
+    del_handler(chat_id, user_id)
     generator = dialog_accept(user_id)
 
-    apply_handler(bot, chat_id, generator, update.message)
+    apply_handler(bot, chat_id, user_id, generator, update.message)
 
 
 def order(bot, update):
     chat_id = update.message.chat_id
     user_id = int(update.message.from_user['id'])
 
-    handlers.pop(chat_id, None)
+    del_handler(chat_id, user_id)
     generator = dialog_ticket(user_id)
 
-    apply_handler(bot, chat_id, generator, update.message)
-
-
-# noticies = SlackNotice.objects.filter(type=SlackNotice.TBOT_ORDER)
-# try:
-#     text = update.message.text[update.message.text.index(' '):].strip()
-#     reply_text = 'Заявка отправлена!'
-#     attachments = [
-#         {
-#             'fields': [
-#                 {
-#                     "title": text,
-#                     "short": False,
-#                 },
-#             ],
-#         },
-#     ]
-#     for notice in noticies:
-#         notice.send('Новая заявка:', attachments)
-# except:
-#     reply_text = 'Не правильно введена команда!\nПример команды: \n /ticket на АЗК 100 не работает принтер'
-#
-# bot.sendMessage(update.message.chat_id, text=reply_text)
+    apply_handler(bot, chat_id, user_id, generator, update.message)
 
 
 def text(bot, update):
@@ -255,8 +243,6 @@ def text(bot, update):
             text += first_name
         if last_name:
             text += ' ' + last_name
-        print(update.effective_user['first_name'])
-        print(update.effective_user['last_name'])
         text += ': ' + str(update.message.text)
         for notice in noticies:
             notice.send(text, attachments)
@@ -278,7 +264,8 @@ def photo(bot, update):
 
 def weather(bot, update):
     chat_id = update.message.chat_id
-    handlers.pop(chat_id, None)
+    user_id = int(update.message.from_user['id'])
+    del_handler(chat_id, user_id)
 
     s_city = "Irkutsk,RU"
     city_id = 2023469
@@ -303,7 +290,8 @@ def weather(bot, update):
 
 def citate(bot, update):
     chat_id = update.message.chat_id
-    handlers.pop(chat_id, None)
+    user_id = int(update.message.from_user['id'])
+    del_handler(chat_id, user_id)
 
     res = requests.get("http://api.forismatic.com/api/1.0/",
                        params={'method': 'getQuote', 'key': '457653', 'lang': 'ru', 'format': 'json'})

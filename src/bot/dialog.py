@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from bot.models import SlackNotice
 from main.models import Person, EmployeesAZK, Azs
 
 
@@ -12,8 +13,47 @@ def get_person(user_id):
     if not person.is_active:
         answer += "\nПользователь не авторизован. Попросите модератора вас авторизовать.\n" + \
                   "Пришлите ему ваш telegram ID: %s\n" % user_id
+        hr = Person.objects.filter(hr=True)
+        if hr.count() > 0:
+            answer += "\nСпиcок модераторов:\n"
+            for person_hr in hr:
+                answer += str(person_hr) + "\n"
 
     return person, answer
+
+
+def get_person_info(person):
+    answer = "Нет информации."
+    result = False
+
+    if person:
+        # инфа о физлице
+        answer = "\n===Информация о Вас=== \n" \
+                 "Ваш telegram ID: %s \n" \
+                 "ФИО: %s \n" \
+                 "Телефон: %s \n" \
+                 "Место работы: %s \n\n" % \
+                 (person.telegram_id,
+                  person.name,
+                  person.phone,
+                  person.description)
+
+        # инфа как о сотруднике
+        empls = EmployeesAZK.objects.filter(person=person)
+        for empl in empls:
+            answer += "Объект: %s\n" \
+                      "Должность: %s\n" \
+                      "Статус учетной записи TradeHouse: %s\n" \
+                      "Логин TradeHouse: %s\n" \
+                      "Пароль TradeHouse: %s\n\n" % \
+                      (empl.azk,
+                       empl.position,
+                       empl.status,
+                       empl.login,
+                       empl.password)
+        result = True
+
+    return result, answer
 
 
 def hello(user_id):
@@ -82,40 +122,54 @@ def dialog_register(user_id):
 
 
 def dialog_accept(user_id):
-    e = GeneratorExit('Функция в разработке...')
-    raise e
-    yield 'Функция в разработке...'
+    person, answer = yield from get_person(user_id)
+    if isinstance(person, Person) and person.hr and person.is_active:
+        answer = yield "Введите telegram_id, который вы хотите авторизовать:"
+        try:
+            person_id = int(answer.text)
+            person = Person.objects.get(telegram_id=person_id)
+            result, info = get_person_info(person)
+            if result:
+                saved = yield from ask_yes_or_no(info + "\n\n Авторизовываем? \n")
+                if saved:
+                    person.is_active = True
+                    person.save()
+                    answer = "Сотрудник аторизован.\n"
+                else:
+                    answer = "Отмена авторизации.\n"
+        except:
+            answer = "Код не найден."
+    else:
+        answer = "У Вас нет права авторизовывать."
 
+    e = GeneratorExit(answer)
+    raise e
 
 
 def dialog_me(user_id):
     person, answer = yield from get_person(user_id)
-    if person:
-        # инфа о физлице
-        answer += "Ваш telegram ID: %s \n" \
-                  "ФИО: %s \n" \
-                  "Телефон: %s \n" \
-                  "Место работы: %s \n\n" % \
-                  (person.telegram_id,
-                   person.name,
-                   person.phone,
-                   person.description)
 
-        # инфа как о сотруднике
-        empls = EmployeesAZK.objects.filter(person=person)
-        for empl in empls:
-            answer += "Объект: %s\n" \
-                      "Должность: %s\n" \
-                      "Статус учетной записи TradeHouse: %s\n" \
-                      "Логин TradeHouse: %s\n" \
-                      "Пароль TradeHouse: %s\n\n" % \
-                      (empl.azk,
-                       empl.position,
-                       empl.status,
-                       empl.login,
-                       empl.password)
+    result, info = get_person_info(person)
+    if result:
+        answer += info
 
     return answer
+
+
+def send_ticket(ticket_text):
+    noticies = SlackNotice.objects.filter(type=SlackNotice.TBOT_ORDER)
+    attachments = [
+        {
+            'fields': [
+                {
+                    "title": ticket_text,
+                    "short": False,
+                },
+            ],
+        },
+    ]
+    for notice in noticies:
+        notice.send('Новая заявка:', attachments)
 
 
 def dialog_ticket(user_id):
@@ -125,11 +179,11 @@ def dialog_ticket(user_id):
         text = ''
         if not answer:
             text = '\nЗдравствуйте %s.' % person
-        ticket_text = yield '%s \nОпишите вашу проблему.' % text
-
+        answer = yield '%s \nОпишите вашу проблему.' % text
+        ticket_text = answer.text
         answer = yield from ask_yes_or_no("Отправляем заявку в службу техподдержки?")
         if answer:
-            # send ticket
+            send_ticket(ticket_text)
             answer = 'Заявка отправлена.'
         else:
             answer = 'Заявка отменена.'
