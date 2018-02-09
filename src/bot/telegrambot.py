@@ -230,22 +230,28 @@ def order(bot, update):
 
 
 def text(bot, update):
-    if update.message.text.startswith("@otpazk_bot"):
-        smalltalk(bot, update)
+    chat_id = update.message.chat_id
+    user_id = int(update.message.from_user['id'])
+    just_started, handler = get_handler(chat_id, user_id)
+    if just_started:
+        if update.message.text.startswith("@otpazk_bot"):
+            smalltalk(bot, update)
+        else:
+            noticies = SlackNotice.objects.filter(type=SlackNotice.TBOT_ALL)
+            attachments = [
+            ]
+            text = ''
+            first_name = str(update.effective_user['first_name'])
+            last_name = str(update.effective_user['last_name'])
+            if first_name:
+                text += first_name
+            if last_name:
+                text += ' ' + last_name
+            text += ': ' + str(update.message.text)
+            for notice in noticies:
+                notice.send(text, attachments)
     else:
-        noticies = SlackNotice.objects.filter(type=SlackNotice.TBOT_ALL)
-        attachments = [
-        ]
-        text = ''
-        first_name = str(update.effective_user['first_name'])
-        last_name = str(update.effective_user['last_name'])
-        if first_name:
-            text += first_name
-        if last_name:
-            text += ' ' + last_name
-        text += ': ' + str(update.message.text)
-        for notice in noticies:
-            notice.send(text, attachments)
+        handle_message(bot, update)
 
 
 def photo(bot, update):
@@ -331,7 +337,7 @@ def main():
 
     # dp.add_handler(MessageHandler(Filters.command, handle_message))
     dp.add_handler(MessageHandler(Filters.private, smalltalk))
-    dp.add_handler(MessageHandler(Filters.text, handle_message))
+    dp.add_handler(MessageHandler(Filters.text, text))
     dp.add_handler(MessageHandler(Filters.photo, photo))
     # message_handler =
     # inline_query_handler = InlineQueryHandler(self.handle_inline_query)
