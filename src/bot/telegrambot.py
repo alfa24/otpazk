@@ -326,12 +326,12 @@ def main():
     # dp = DjangoTelegramBot.getDispatcher('BOT_n_username')  #get by bot username
 
     # on different commands - answer in Telegram
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(CommandHandler("register", register))
-    dp.add_handler(CommandHandler("accept", accept))
-    dp.add_handler(CommandHandler("me", me))
-    dp.add_handler(CommandHandler("help", help))
-    dp.add_handler(CommandHandler("ticket", order))
+    # dp.add_handler(CommandHandler("start", start))
+    # dp.add_handler(CommandHandler("register", register))
+    # dp.add_handler(CommandHandler("accept", accept))
+    # dp.add_handler(CommandHandler("me", me))
+    # dp.add_handler(CommandHandler("help", help))
+    # dp.add_handler(CommandHandler("ticket", order))
     dp.add_handler(CommandHandler("weather", weather))
     dp.add_handler(CommandHandler("citate", citate))
 
