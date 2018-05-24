@@ -145,7 +145,9 @@ STATICFILES_DIRS = (
 #
 # # папка static которая используется в продакшене, собирается из всех папок командой collectstatic
 STATIC_ROOT = os.path.join(BASE_DIR, "static_root")
-MEDIA_ROOT = os.path.join(BASE_DIR, "media", "media")
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+BACKUP_ROOT = os.path.join(MEDIA_ROOT, 'backup_linux')
+BACKUP_SCRIPTS = os.path.join(STATIC_ROOT, 'backup_linux')
 
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_HOST = env('DJANGO_EMAIL_HOST')

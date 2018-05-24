@@ -15,9 +15,11 @@ class SlackNotice(models.Model):
     ERROR_SYNCTIME = 0
     TBOT_ORDER = 1
     TBOT_ALL = 2
+    ERROR_BACKUP = 3
 
     notice_type = (
         (ERROR_SYNCTIME, 'Ошибка синхронизация времени на Linux'),
+        (ERROR_BACKUP, 'Ошибка скачивания бэкапа на Linux'),
         (TBOT_ORDER, 'Телеграм бот: /заявка'),
         (TBOT_ALL, 'Телеграм бот: Дублирование всех сообщений в чате'),
     )
