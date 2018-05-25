@@ -23,6 +23,7 @@ pip install -r src/requirements/base.txt
 cd src
 python manage.py collectstatic --no-input
 python manage.py migrate
+chmod +rwx task_backup_linux.sh
 cp supervisor.conf /etc/supervisor/conf.d/supervisor.conf
 
 service supervisor start
