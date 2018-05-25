@@ -131,37 +131,36 @@ class Command(BaseCommand):
         path_to_log = path_to_backup
 
         chr = CharacteristicSP.objects.filter(
-            Q(service_point__type__type=TypeServicePoint.POS, service_point__is_active=True) | Q(
-                service_point__type__type=TypeServicePoint.OIL, service_point__is_active=True)
-        )
+            Q(service_point__type__type=TypeServicePoint.POS) | Q(service_point__type__type=TypeServicePoint.OIL)
+        ).filter(type__type=TypeCharacteristicSP.IP).filter(service_point__is_active=True)
         sp_count = chr.count()
         sp_complete = 0
+
         for c in chr:
-            if c.type.type == TypeCharacteristicSP.IP:
-                ip = c.value1
-                error_text = ''
-                try:
-                    # создаем папку с номером азк
-                    path_bkp_azk = path_to_backup + str(c.service_point.azs.name) + '/'
-                    if not os.path.exists(path_bkp_azk):
-                        os.mkdir(path_bkp_azk)
+            ip = c.value1
+            error_text = ''
+            try:
+                # создаем папку с номером азк
+                path_bkp_azk = path_to_backup + str(c.service_point.azs.name) + '/'
+                if not os.path.exists(path_bkp_azk):
+                    os.mkdir(path_bkp_azk)
 
-                    # запускаем выполнение архивации
-                    log("Подключение к " + str(c.service_point), path_to_log)
-                    backup(ip, path_bkp_azk, path_to_log)
-                    sp_complete += 1
-                except paramiko.ssh_exception.AuthenticationException:
-                    error_text = 'Не подходит логин или пароль.'
-                except TimeoutError:
-                    error_text = 'Таймаут подключения к хосту.'
-                except Exception as e:
-                    error_text = 'Ошибка: ' + e.__str__()
-                if error_text:
-                    log(error_text, path_to_log)
-                    self.send_to_slack(c.service_point, ip, error_text)
+                # запускаем выполнение архивации
+                log("Подключение к " + str(c.service_point), path_to_log)
+                backup(ip, path_bkp_azk, path_to_log)
+                sp_complete += 1
+            except paramiko.ssh_exception.AuthenticationException:
+                error_text = 'Не подходит логин или пароль.'
+            except TimeoutError:
+                error_text = 'Таймаут подключения к хосту.'
+            except Exception as e:
+                error_text = 'Ошибка: ' + e.__str__()
+            if error_text:
+                log(error_text, path_to_log)
+                self.send_to_slack(c.service_point, ip, error_text)
 
-                log("\t\t", path_to_log)
-                log("\t\t", path_to_log)
+            log("\t\t", path_to_log)
+            log("\t\t", path_to_log)
 
         log("Задание по выполнению архивации параметров Linux выполнена на %s из %s ПК" % (
             sp_complete, sp_count
