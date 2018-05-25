@@ -5,11 +5,20 @@ from django.core.management.base import BaseCommand
 import paramiko
 import datetime
 from django.conf import settings
+from django.db.models import Q
 
 from main.models import CharacteristicSP, TypeServicePoint, TypeCharacteristicSP
 
 
-def backup(ip):
+def log(message, path_to_log):
+    f = open(path_to_log + 'log.txt', 'a')
+    time = datetime.datetime.now()
+    f.write(time.strftime("%d.%m.%y %H:%M:   ") + message + '\n')
+    f.close()
+    print(message)
+
+
+def backup(ip, path_to_backup, path_to_log):
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     try:
@@ -28,16 +37,11 @@ def backup(ip):
     if hostname.__len__() < 8:
         hostname = ip + '_' + hostname
     channel.close()
-    print("Имя компьютера: " + hostname)
+    log("\t\tИмя компьютера: " + hostname, path_to_log)
 
-    # создаем папку АЗК
-    path_to_backup = settings.__getattr__('BACKUP_ROOT') + '/'
     sftp = ssh.open_sftp()
-    if not os.path.exists(path_to_backup):
-        os.mkdir(path_to_backup)
-
     # заливаем скрипт
-    print("заливаем скрипт")
+    log("\t\tзаливаем скрипт", path_to_log)
     file_list = ['bkp.sh']
     remote_path = "/home/ufo/.UFO/"
     local_path = settings.__getattr__('BACKUP_SCRIPTS') + '/'
@@ -50,7 +54,7 @@ def backup(ip):
         sftp.put(local_path + file, remote_path + file)
 
     # запускаем скрипт
-    print("запускаем скрипт")
+    log("\t\tзапускаем скрипт", path_to_log)
     channel = ssh.get_transport().open_session()
     channel.get_pty()
     channel.exec_command('cd /home/ufo/.UFO/ && chmod +rwx bkp.sh &&  ./bkp.sh')
@@ -61,7 +65,7 @@ def backup(ip):
     channel.close()
 
     # скачиваем архив
-    print("скачиваем архив")
+    log("\t\tскачиваем архив", path_to_log)
     file_list = ['bkp.tar.gz']
     remote_path = "/home/ufo/.UFO/"
     # local_path = ip + '/'
@@ -70,13 +74,12 @@ def backup(ip):
     for file in file_list:
         if not os.path.exists(local_path + file):
             sftp.get(remote_path + file, local_path + file)
-            date = datetime.datetime.now()
             # переименовываем файл
-            new_file = 'bkp_' + hostname + date.strftime("_%y_%m_%d.tar.gz")
+            new_file = 'bkp_' + hostname + ".tar.gz"
             os.rename(local_path + file, local_path + new_file)
 
-    print("Бэкап выполнен: " + new_file)
-    print("отключаемся")
+    log("\t\tБэкап выполнен: " + new_file, path_to_log)
+    log("\t\tотключаемся", path_to_log)
     ssh.close()
     # return cur_date, then, delta_minutes
 
@@ -117,21 +120,49 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         k = 0
-        chr = CharacteristicSP.objects.filter(service_point__type__type=TypeServicePoint.POS)
+        # создаем папку с архивами "yyyy.mm.dd"
+        path_to_backup = settings.__getattr__('BACKUP_ROOT') + '/'
+        if not os.path.exists(path_to_backup):
+            os.mkdir(path_to_backup)
+        date = datetime.datetime.now()
+        path_to_backup += date.strftime("%Y.%m.%d") + '/'
+        if not os.path.exists(path_to_backup):
+            os.mkdir(path_to_backup)
+        path_to_log = path_to_backup
+
+        chr = CharacteristicSP.objects.filter(
+            Q(service_point__type__type=TypeServicePoint.POS, service_point__is_active=True) or
+            Q(service_point__type__type=TypeServicePoint.OIL, service_point__is_active=True)
+        )
+        sp_count = chr.count()
+        sp_complete = 0
         for c in chr:
             if c.type.type == TypeCharacteristicSP.IP:
-                if c.service_point.type.type == TypeServicePoint.POS or c.service_point.type.type == TypeServicePoint.OIL:
-                    ip = c.value1
-                    error_text = ''
-                    try:
-                        self.stdout.write(self.style.SUCCESS("Подключение к " + str(c.service_point)))
-                        backup(ip)
-                    except paramiko.ssh_exception.AuthenticationException:
-                        error_text = 'Не подходит логин или пароль.'
-                    except TimeoutError:
-                        error_text = 'Таймаут подключения к хосту.'
-                    except Exception as e:
-                        error_text = 'Ошибка: ' + e.__str__()
-                    if error_text:
-                        self.stdout.write(self.style.ERROR(error_text))
-                        self.send_to_slack(c.service_point, ip, error_text)
+                ip = c.value1
+                error_text = ''
+                try:
+                    # создаем папку с номером азк
+                    path_bkp_azk = path_to_backup + str(c.service_point.azs.name) + '/'
+                    if not os.path.exists(path_bkp_azk):
+                        os.mkdir(path_bkp_azk)
+
+                    # запускаем выполнение архивации
+                    log("Подключение к " + str(c.service_point), path_to_log)
+                    backup(ip, path_bkp_azk, path_to_log)
+                    sp_complete += 1
+                except paramiko.ssh_exception.AuthenticationException:
+                    error_text = 'Не подходит логин или пароль.'
+                except TimeoutError:
+                    error_text = 'Таймаут подключения к хосту.'
+                except Exception as e:
+                    error_text = 'Ошибка: ' + e.__str__()
+                if error_text:
+                    log(error_text, path_to_log)
+                    self.send_to_slack(c.service_point, ip, error_text)
+
+                log("\t\t", path_to_log)
+                log("\t\t", path_to_log)
+
+        log("Задание по выполнению архивации параметров Linux выполнена на %s из %s ПК" % (
+            sp_complete, sp_count
+        ), path_to_log)
