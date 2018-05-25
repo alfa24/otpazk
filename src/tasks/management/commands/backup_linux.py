@@ -131,8 +131,8 @@ class Command(BaseCommand):
         path_to_log = path_to_backup
 
         chr = CharacteristicSP.objects.filter(
-            Q(service_point__type__type=TypeServicePoint.POS, service_point__is_active=True) or
-            Q(service_point__type__type=TypeServicePoint.OIL, service_point__is_active=True)
+            Q(service_point__type__type=TypeServicePoint.POS, service_point__is_active=True) | Q(
+                service_point__type__type=TypeServicePoint.OIL, service_point__is_active=True)
         )
         sp_count = chr.count()
         sp_complete = 0
