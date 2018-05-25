@@ -162,6 +162,8 @@ class Command(BaseCommand):
             log("\t\t", path_to_log)
             log("\t\t", path_to_log)
 
-        log("Выполнен бэкап параметров Linux на %s из %s ПК. Подробнее смотрите в лог-файле." % (
+        message = "Выполнен бэкап параметров Linux на %s из %s ПК. Подробнее смотрите в лог-файле." % (
             sp_complete, sp_count
-        ), path_to_log)
+        )
+        log(message, path_to_log)
+        self.send_to_slack('*', "*", message)
