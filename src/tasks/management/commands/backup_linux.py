@@ -91,7 +91,7 @@ class Command(BaseCommand):
         parser.add_argument('service_point_id', nargs='*', type=int)
 
     def send_to_slack(self, sp, ip, error_text):
-        main_text = 'Ошибка получения бэкапа'
+        main_text = 'Выполнение бэкапа.'
 
         attachments = [
             {
@@ -107,7 +107,7 @@ class Command(BaseCommand):
                         "short": False,
                     },
                     {
-                        "title": 'Текст ошибки:',
+                        "title": 'Текст сообщения:',
                         "value": str(error_text),
                         "short": False,
                     },
@@ -150,9 +150,9 @@ class Command(BaseCommand):
                 backup(ip, path_bkp_azk, path_to_log)
                 sp_complete += 1
             except paramiko.ssh_exception.AuthenticationException:
-                error_text = 'Не подходит логин или пароль.'
+                error_text = 'Ошибка: Не подходит логин или пароль.'
             except TimeoutError:
-                error_text = 'Таймаут подключения к хосту.'
+                error_text = 'Ошибка: Таймаут подключения к хосту.'
             except Exception as e:
                 error_text = 'Ошибка: ' + e.__str__()
             if error_text:
@@ -162,6 +162,6 @@ class Command(BaseCommand):
             log("\t\t", path_to_log)
             log("\t\t", path_to_log)
 
-        log("Задание по выполнению архивации параметров Linux выполнена на %s из %s ПК" % (
+        log("Выполнен бэкап параметров Linux на %s из %s ПК. Подробнее смотрите в лог-файле." % (
             sp_complete, sp_count
         ), path_to_log)
