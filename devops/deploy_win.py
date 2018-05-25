@@ -13,7 +13,7 @@ def main(ip):
         channel.get_pty()
         channel.settimeout(5)
 
-        channel.exec_command('cd /opt/otpazk/ && git pull')
+        channel.exec_command('cd /opt/otpazk/ && git reset --hard HEAD && git pull')
         msg = 1
         while msg != b'':
             msg = channel.recv(1024)
