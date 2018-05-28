@@ -51,6 +51,14 @@ class Azs(models.Model):
     def __str__(self):
         return "%s" % (self.full_name)
 
+    def get_name(self):
+        name = self.name
+        if self.name.__len__() < 3:
+            name = '0000' + self.name
+            name = name[-3:]
+
+        return name
+
     class Meta:
         verbose_name = 'АЗК'
         verbose_name_plural = 'АЗК/АЗС'

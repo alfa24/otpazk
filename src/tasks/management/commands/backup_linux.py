@@ -18,7 +18,7 @@ def log(message, path_to_log):
     print(message)
 
 
-def backup(ip, path_to_backup, path_to_log):
+def backup(ip, path_to_backup, path_to_log, filename):
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     try:
@@ -75,7 +75,7 @@ def backup(ip, path_to_backup, path_to_log):
         if not os.path.exists(local_path + file):
             sftp.get(remote_path + file, local_path + file)
             # переименовываем файл
-            new_file = 'bkp_' + hostname + ".tar.gz"
+            new_file = filename + ".tar.gz"
             os.rename(local_path + file, local_path + new_file)
 
     log("\t\tБэкап выполнен: " + new_file, path_to_log)
@@ -131,7 +131,9 @@ class Command(BaseCommand):
         path_to_log = path_to_backup
 
         chr = CharacteristicSP.objects.filter(
-            Q(service_point__type__type=TypeServicePoint.POS) | Q(service_point__type__type=TypeServicePoint.OIL)
+            # Q(service_point__type__name='КАССА-3')
+            Q(service_point__type__type=TypeServicePoint.POS) |
+            Q(service_point__type__type=TypeServicePoint.OIL)
         ).filter(type__type=TypeCharacteristicSP.IP).filter(service_point__is_active=True)
         sp_count = chr.count()
         sp_complete = 0
@@ -141,13 +143,25 @@ class Command(BaseCommand):
             error_text = ''
             try:
                 # создаем папку с номером азк
-                path_bkp_azk = path_to_backup + str(c.service_point.azs.name) + '/'
+                path_bkp_azk = path_to_backup + '0380' + str(c.service_point.azs.get_name()) + '/'
                 if not os.path.exists(path_bkp_azk):
                     os.mkdir(path_bkp_azk)
 
                 # запускаем выполнение архивации
                 log("Подключение к " + str(c.service_point), path_to_log)
-                backup(ip, path_bkp_azk, path_to_log)
+                if c.service_point.type.name == "КАССА-1":
+                    type_sp = 'P_1'
+                elif c.service_point.type.name == "КАССА-2":
+                    type_sp = 'P_2'
+                elif c.service_point.type.name == "КАССА-3":
+                    type_sp = 'P_3'
+                elif c.service_point.type.name == "Топливный Сервер":
+                    type_sp = 'F_1'
+                else:
+                    type_sp = ''
+
+                filename = '0380' + str(c.service_point.azs.get_name()) + '_' + type_sp + '_' + ip
+                backup(ip, path_bkp_azk, path_to_log, filename)
                 sp_complete += 1
             except paramiko.ssh_exception.AuthenticationException:
                 error_text = 'Ошибка: Не подходит логин или пароль.'
