@@ -163,6 +163,7 @@ POS_OLD_PASSWORD = env('DJANGO_POS_OLD_PASSWORD')
 # wiki
 WIKI_ACCOUNT_HANDLING = True
 WIKI_ACCOUNT_SIGNUP_ALLOWED = True
+WIKI_ATTACHMENTS_EXTENSIONS = ['pdf', 'doc', 'odt', 'docx', 'txt', 'zip', 'rar', '7z', 'tpl', 'xls', 'xlsx']
 
 from django.core.urlresolvers import reverse_lazy
 LOGIN_REDIRECT_URL = reverse_lazy('wiki:get', kwargs={'path': ''})
